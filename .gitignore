@@ -1,0 +1,16 @@
+# RStudio project internal state
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Course-provided material and non-portfolio files (not for publication)
+denki2020 (1).R
+スクリーンショット *.png
+3時間計画.md
+面接対策_構造分析.md
+再現手順.md
+演習問題4_構造変化の分析.docx
+
+# OS
+.DS_Store

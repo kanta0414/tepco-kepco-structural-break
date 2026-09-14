@@ -1,0 +1,4 @@
+# R packages required to run code/01_market_model_analysis.R
+# Tested with R >= 4.0
+
+MASS   # stepAIC() (bundled with base R, no install.packages() needed)
