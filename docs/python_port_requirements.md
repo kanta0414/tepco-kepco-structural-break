@@ -4,7 +4,7 @@
 |---|---|
 | 対象 | `code/01_market_model_analysis.R` と同等の分析を行う Python スクリプト |
 | 作成日 | 2026-09-15 |
-| 状態 | ドラフト（§10 の未決事項を決めたら確定） |
+| 状態 | 確定・実装済み（§10 は推奨案で決定） |
 
 ---
 
@@ -27,7 +27,7 @@ R で行った分析は、Python（pandas / NumPy / statsmodels / SciPy / matplo
 
 ※1 statsmodels の既定設定のままだと一致しない。§7 参照。
 ※2 statsmodels に同等の関数がないため自前で実装した。§7 参照。
-※3 レポートに記載された値との一致。R スクリプト本体には含まれていない。§10 参照。
+※3 当初はレポートにだけ載っていた値。R スクリプトのセクション 8(f) に追加し、R と Python の出力が小数4桁で一致することを確認した（§10 U-3）。
 
 検証時の環境：Python 3.13.3、pandas 3.0.5、NumPy 2.5.3、statsmodels 0.15.0、SciPy 1.18.1、matplotlib 3.11.2（macOS）
 
@@ -55,13 +55,13 @@ R で行った分析は、Python（pandas / NumPy / statsmodels / SciPy / matplo
 | 5 | 10モデルの比較（中心化 TSS で揃えた修正済み R²、σ、AIC） |
 | 6 | 主要6モデルの推定 |
 | 7 | Chow 検定と期間別の推定 |
-| 8 | 頑健性チェック (a)〜(e) |
+| 8 | 頑健性チェック (a)〜(f) |
 | 9 | AIC による前進ステップワイズ |
 
 ### 対象外
 
 - Word レポート（`演習問題4_構造変化の分析.docx`）の生成
-- R スクリプトの修正（§10 の未決事項 U-3 で決める場合を除く）
+- R スクリプトの修正（§10 U-3 による 8(f) の追加を除く）
 - 分析手法の追加や変更（R と同じ結果を出すことが目的のため）
 
 ## 3. 前提と制約
@@ -78,10 +78,12 @@ R で行った分析は、Python（pandas / NumPy / statsmodels / SciPy / matplo
 
 | ファイル | 内容 |
 |---|---|
-| `code/01_market_model_analysis.py` | 分析スクリプト本体（ファイル名は U-1 で決める） |
-| `requirements.txt` | Python の依存パッケージ（現在のファイルの扱いは U-2 で決める） |
+| `code/01_market_model_analysis.py` | 分析スクリプト本体 |
+| `requirements.txt` | Python の依存パッケージ |
+| `requirements-dev.txt` | テスト用の依存パッケージ（pytest） |
+| `R-packages.txt` | R 版の依存パッケージ（旧 `requirements.txt` を改名。§10 U-2） |
 | `tests/test_reproduce_r.py` | R の参照値と照合するテスト（§8） |
-| `output/*.png` | 図（§6 NFR-4） |
+| `output/fig_timeseries.png`、`output/fig_scatter.png` | 図A・図B（§6 NFR-4） |
 
 ---
 
@@ -162,6 +164,7 @@ R のセクション番号と 1 対 1 で対応させる。変数名も R にそ
 | FR-8c | 2011年3月を除く | 完全モデルを n = 204 で推定し直す |
 | FR-8d | 2011年3〜12月を除く | 完全モデルを n = 195 で推定し直す |
 | FR-8e | 断点をずらす | 断点を震災月の −2〜+2 か月にずらし、それぞれの完全モデルの修正済み R²（中心化）を1行で出す |
+| FR-8f | 残差の診断とβの差 | 完全モデルについて Durbin–Watson、Breusch–Pagan（Koenker 版）、Breusch–Godfrey（4次、ラグの初期値は0）と、期間別βの差の Welch 型 z 検定を出す（§10 U-3 で追加） |
 
 ### FR-9 ステップワイズ選択
 
@@ -206,7 +209,7 @@ R のセクション番号と 1 対 1 で対応させる。変数名も R にそ
 - `anova_lm` や `compare_f_test` による Chow 検定
 - `cov_type="HC1"`
 - `het_breuschpagan` の既定（Koenker 版）
-- `acorr_breusch_godfrey(nlags=4)`
+- `acorr_breusch_godfrey(nlags=4)`（statsmodels 0.15 では戻り値の形式変更の FutureWarning が出るため、`result_object=False` を付けて現在の形式に固定する）
 - `durbin_watson`
 
 ---
@@ -277,6 +280,8 @@ AIC（R の定義）は TKYD の `cd+g dx` で −227.4436、`a+cd+bx+g dx` で 
 | 分散比 F | 13.497（p < 2.2e-16） | 4.9715（p = 1.599e-13） |
 | 3月を除いたときの dx | 1.19935 (0.28012) | 0.78894 (0.21288) |
 | 3〜12月を除いたときの dx | 1.17001 (0.24531) | 0.80852 (0.20803) |
+| DW / BP（p） / BG(4)（p） | 2.0059 / 8.7518（0.0328） / 2.0721（0.7225） | 2.0018 / 8.8784（0.0310） / 1.3200（0.8580） |
+| βの差 / z | 1.6914 / 4.6936 | 0.8188 / 4.0519 |
 
 TOPIX の分散比は F = 0.78785（p = 0.2296）。
 
@@ -310,15 +315,15 @@ TOPIX の分散比は F = 0.78785（p = 0.2296）。
 
 ---
 
-## 10. 未決事項
+## 10. 決定事項（2026-09-15、推奨案で決定）
 
-| ID | 決めること | 選択肢 | 推奨 |
+| ID | 決めたこと | 選択肢 | 決定と理由 |
 |---|---|---|---|
-| U-1 | スクリプトのファイル名 | (a) `code/01_market_model_analysis.py`（R と同じ名前で拡張子だけ変える）<br>(b) `code/02_market_model_analysis.py` | **(a)**。番号は分析の手順を表すので、同じ手順の別言語版は同じ番号がわかりやすい |
-| U-2 | `requirements.txt` の扱い | 現在の `requirements.txt` には **R のパッケージ（MASS）** が書かれている。pip はこの名前のファイルを Python 用として読むので、そのままでは衝突する。<br>(a) R 用を `R-packages.txt` などに改名し、`requirements.txt` を Python 用にする<br>(b) Python 用を `requirements-python.txt` にする<br>(c) `pyproject.toml` を使う | **(a)**。`pip install -r requirements.txt` がそのまま使える |
-| U-3 | レポートにしか載っていない分析 | レポート（docx）には DW・BP・BG の値と「期間別βの差の検定（Welch 型）」が載っているが、**コミット済みの R スクリプトには含まれていない**。レポート付録の「このコードで本稿のすべての数値が再現される」という記述は、現状では正確ではない。<br>(a) Python 版に FR-8f として加え、R 版にも追加する<br>(b) Python 版だけに加える<br>(c) どちらにも加えない | **(a)**。参照値は検証済み：TKYD は DW 2.006、BP 8.75（p = 0.0328）、BG(4) 2.07（p = 0.7225）、βの差 z = 4.694。KNSD は DW 2.002、BP 8.88（p = 0.0310）、BG(4) 1.32（p = 0.8580）、βの差 z = 4.052 |
-| U-4 | `output/` に保存した図を git で管理するか | (a) 管理しない（`.gitignore` に追加）<br>(b) 管理する | **(b)**。ポートフォリオでは、GitHub 上でコードを実行しなくても図が見えるほうがよい |
-| U-5 | テストに pytest を使うか | (a) pytest を開発用の依存として追加する<br>(b) 標準の `unittest` だけで書く | **(a)**。書きやすく、失敗したときの差分表示が見やすい。ただし C-4 の例外になる |
+| U-1 | スクリプトのファイル名 | (a) `code/01_market_model_analysis.py`（R と同じ名前で拡張子だけ変える）<br>(b) `code/02_market_model_analysis.py` | **(a) を採用**。番号は分析の手順を表すので、同じ手順の別言語版は同じ番号がわかりやすい |
+| U-2 | `requirements.txt` の扱い | 現在の `requirements.txt` には **R のパッケージ（MASS）** が書かれている。pip はこの名前のファイルを Python 用として読むので、そのままでは衝突する。<br>(a) R 用を `R-packages.txt` などに改名し、`requirements.txt` を Python 用にする<br>(b) Python 用を `requirements-python.txt` にする<br>(c) `pyproject.toml` を使う | **(a) を採用**（`R-packages.txt` に改名）。`pip install -r requirements.txt` がそのまま使える |
+| U-3 | レポートにしか載っていない分析 | レポート（docx）には DW・BP・BG の値と「期間別βの差の検定（Welch 型）」が載っているが、**コミット済みの R スクリプトには含まれていない**。レポート付録の「このコードで本稿のすべての数値が再現される」という記述は、現状では正確ではない。<br>(a) Python 版に FR-8f として加え、R 版にも追加する<br>(b) Python 版だけに加える<br>(c) どちらにも加えない | **(a) を採用**（R 版 8(f)、Python 版 FR-8f）。参照値：TKYD は DW 2.006、BP 8.75（p = 0.0328）、BG(4) 2.07（p = 0.7225）、βの差 z = 4.694。KNSD は DW 2.002、BP 8.88（p = 0.0310）、BG(4) 1.32（p = 0.8580）、βの差 z = 4.052 |
+| U-4 | `output/` に保存した図を git で管理するか | (a) 管理しない（`.gitignore` に追加）<br>(b) 管理する | **(b) を採用**。ポートフォリオでは、GitHub 上でコードを実行しなくても図が見えるほうがよい |
+| U-5 | テストに pytest を使うか | (a) pytest を開発用の依存として追加する<br>(b) 標準の `unittest` だけで書く | **(a) を採用**（`requirements-dev.txt`）。書きやすく、失敗したときの差分表示が見やすい。ただし C-4 の例外になる |
 
 ---
 

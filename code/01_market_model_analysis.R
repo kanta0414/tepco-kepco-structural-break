@@ -152,6 +152,32 @@ for (j in 1:2) { y <- if (j == 1) y1 else y2
     cat(sprintf("%s=%.4f ", lab[qq], adjR2(lm(y ~ dd + x + I(dd*x)), y))) }
   cat("\n") }
 
+## (f) 残差の診断と, 震災前後のベータの差の検定
+## dw: Durbin-Watson統計量
+## bp: Breusch-Pagan検定 (Koenker版: 残差の2乗を説明変数に回帰した n R^2)
+## bg: Breusch-Godfrey検定 (残差を説明変数と残差のラグ1〜p期に回帰した n R^2, ラグの初期値は0)
+dw <- function(m) { u <- resid(m); sum(diff(u)^2) / sum(u^2) }
+bp <- function(m) {
+  u2 <- resid(m)^2; X <- model.matrix(m)
+  LM <- length(u2) * summary(lm(u2 ~ X[, -1]))$r.squared; df <- ncol(X) - 1
+  c(LM = LM, df = df, p = pchisq(LM, df, lower.tail = FALSE))
+}
+bg <- function(m, p = 4) {
+  u <- resid(m); X <- model.matrix(m); N <- length(u)
+  L <- sapply(1:p, function(l) c(rep(0, l), u[1:(N - l)]))
+  LM <- N * summary(lm(u ~ X[, -1] + L))$r.squared
+  c(LM = LM, df = p, p = pchisq(LM, p, lower.tail = FALSE))
+}
+## 期間ごとに分散が違ってよい Welch 型の z 検定
+beta_diff <- function(y) {
+  a <- summary(lm(y[d==0] ~ x[d==0]))$coefficients[2, 1:2]
+  b <- summary(lm(y[d==1] ~ x[d==1]))$coefficients[2, 1:2]
+  z <- unname((b[1] - a[1]) / sqrt(a[2]^2 + b[2]^2))
+  c(diff = unname(b[1] - a[1]), z = z, p = 2 * pnorm(-abs(z)))
+}
+round(rbind(TKYD = c(DW = dw(t1_full), BP = bp(t1_full), BG = bg(t1_full), beta = beta_diff(y1)),
+            KNSD = c(DW = dw(k1_full), BP = bp(k1_full), BG = bg(k1_full), beta = beta_diff(y2))), 4)
+
 ## ---- 9. 補足: AIC によるステップワイズ ------------------------------------
 library(MASS)
 stepAIC(lm(y1 ~ 1), direction = "forward", scope = list(upper = ~ x + d + dx))
