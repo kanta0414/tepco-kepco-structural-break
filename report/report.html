@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<title>東日本大震災前後の電力株の構造変化分析</title>
+<style>
+@page{size:A4;margin:16mm 16mm 18mm}
+*{box-sizing:border-box}
+body{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:10.3pt;line-height:1.85;color:#161c24;margin:0}
+h1,h2,h3,th,.cap,.tag{font-family:"Hiragino Sans","Yu Gothic",sans-serif}
+h1{font-size:19pt;line-height:1.45;margin:0 0 .3em}
+.sub{color:#5a6673;font-size:9.5pt;margin:0 0 1.4em;font-family:"Hiragino Sans",sans-serif}
+h2{font-size:12.5pt;margin:1.7em 0 .5em;padding-bottom:.25em;border-bottom:1.5px solid #161c24;break-after:avoid}
+h3{font-size:10.5pt;margin:1.3em 0 .3em;break-after:avoid}
+p{margin:0 0 .8em}
+.sum{border:1px solid #b9c3ce;background:#f4f6f9;padding:.8em 1.1em;margin:0 0 1em}
+.sum p{margin:.25em 0}
+table{border-collapse:collapse;width:100%;margin:.5em 0 1em;font-size:9pt;font-variant-numeric:tabular-nums;break-inside:avoid}
+th,td{border:1px solid #c5cdd6;padding:.32em .55em;text-align:right}
+th{background:#eceff3;font-weight:700}
+td:first-child,th:first-child{text-align:left}
+.cap{font-size:8.6pt;color:#4c5966;margin:.2em 0 1em}
+figure{margin:.8em 0;break-inside:avoid}
+figure img{width:100%;display:block}
+.b{color:#2f5f8a;font-weight:700}.a{color:#a63a28;font-weight:700}
+code{font-family:Menlo,monospace;font-size:8.8pt}
+.foot{margin-top:2em;font-size:8.6pt;color:#4c5966;border-top:1px solid #c5cdd6;padding-top:.6em}
+</style></head><body>
+
+<h1>東日本大震災前後の電力株の構造変化分析</h1>
+<p class="sub">東京電力・関西電力のマーケットモデルの比較（2003年10月〜2020年10月、月次）</p>
+
+<div class="sum">
+<p><b>問い</b>　2011年3月11日を境に、電力株と株式市場全体（TOPIX）の関係は変わったか。</p>
+<p><b>結果</b>　市場感応度（ベータ）は、東京電力で <span class="b">0.14</span> → <span class="a">1.83</span>、関西電力で <span class="b">0.05</span> → <span class="a">0.87</span> へ上昇した。構造変化なしの帰無仮説は両社とも1%水準で棄却される。</p>
+<p><b>解釈</b>　震災前は市場とほぼ連動しなかった電力株が、震災後は通常の株式に近い性質を持つようになった。被災していない関西電力にも同じ変化が出ており、電力業界全体の変化と読める。</p>
+</div>
+
+<h2>1. データと前処理</h2>
+<p>TOPIX、東京電力（TKYD）、関西電力（KNSD）の月次株価（2003年9月〜2020年10月、206か月）を使用した。欠損と月の欠落はない。TOPIX は指数（ポイント）、株価は円で単位が異なるため、対数差分で月次収益率に変換した。単位が消えて比較でき、株価の水準をそのまま回帰したときの見せかけの回帰も避けられる。</p>
+<p>収益率は 2003年10月〜2020年10月の205個で、2011年3月を含む第90番目以降の116か月を「震災後」、それ以前の89か月を「震災前」とした。震災当日を含む2011年3月の収益率はすでに震災の影響を受けているため、震災後に含めた。</p>
+
+<figure style="width:74%;margin-left:auto;margin-right:auto"><img src="../output/fig_timeseries.png" alt="株価と収益率の推移">
+<div class="cap">図1　株価・指数（左）と月次対数収益率（右）。赤破線は2011年3月。電力2社は震災後に収益率の振れ幅が拡大し、TOPIX は前後でほぼ変わらない。</div></figure>
+
+<p>2011年3月の東京電力は前月比 −78%（2,114円→466円）で、標本中で突出している。震災後の収益率の標準偏差は、東京電力が0.054から0.197へ、関西電力が0.046から0.102へ拡大した一方、TOPIX は0.054から0.048でほぼ不変だった。</p>
+
+<h2>2. モデル</h2>
+<p>株式収益率 <i>y</i> を市場収益率 <i>x</i> で説明するマーケットモデルに、震災後ダミー <i>d</i>（震災後=1）と交差項 <i>d·x</i> を加えた。</p>
+<p style="text-align:center"><i>y</i> = α + γ<i>d</i> + β<i>x</i> + δ(<i>d·x</i>) + <i>u</i></p>
+<p>震災前の傾きは β、震災後は β + δ である。γ は切片（平均水準）の変化、δ は傾き（市場感応度）の変化を表す。期間を分けて別々に回帰すると2つのベータは得られるが、その差が偶然かを検定できない。ダミーで1本の式にまとめると、差 δ が係数として推定され、標準誤差と検定が得られる。</p>
+
+<h2>3. 結果</h2>
+<table>
+<tr><th></th><th colspan="3">東京電力</th><th colspan="3">関西電力</th></tr>
+<tr><th>説明変数</th><th>構造変化なし</th><th>完全モデル</th><th>縮約モデル</th><th>構造変化なし</th><th>完全モデル</th><th>縮約モデル</th></tr>
+<tr><td>定数項 α</td><td>−0.0129</td><td>−0.0013</td><td>―</td><td>−0.0044</td><td>0.0014</td><td>―</td></tr>
+<tr><td>震災後ダミー γ</td><td>―</td><td>−0.0248</td><td>−0.0261 *</td><td>―</td><td>−0.0123</td><td>−0.0110</td></tr>
+<tr><td>TOPIX β</td><td>0.9857 ***</td><td>0.1388</td><td>―</td><td>0.4642 ***</td><td>0.0544</td><td>―</td></tr>
+<tr><td>交差項 δ</td><td>―</td><td><b>1.6914 ***</b></td><td>1.8302 ***</td><td>―</td><td><b>0.8188 ***</b></td><td>0.8732 ***</td></tr>
+<tr><td>修正済み決定係数</td><td>0.1029</td><td>0.1790</td><td>0.1860</td><td>0.0775</td><td>0.1372</td><td>0.1450</td></tr>
+</table>
+<div class="cap">表1　推定結果（n = 205）。*** は1%、* は5%水準で有意（通常の標準誤差）。縮約モデルは y = γd + δ(d·x) + u。修正済み決定係数は定数項の有無によらず平均まわりの全変動で統一して計算した。</div>
+
+<p><b>構造変化はある。</b>構造変化なしのモデルとの Chow 検定（γ = δ = 0）は、東京電力で F(2,201) = 10.40（p = 0.00005）、関西電力で F(2,201) = 8.03（p = 0.00044）となり、両社とも1%水準で棄却された。</p>
+<p><b>変わったのは傾きで、切片ではない。</b>完全モデルで交差項 δ は両社とも1%水準で有意だが、震災前のベータ β（0.14、0.05）と切片ダミー γ は有意でない。震災後のベータは β + δ で、東京電力 1.83、関西電力 0.87 となる。期間別に推定しても同じ値が得られる。</p>
+<p><b>モデル選択。</b>修正済み決定係数の上位7モデルはすべて交差項を含み、含まないモデルより明確に高い（東京電力で0.17前後 対 0.10前後、関西電力で0.14前後 対 0.08前後）。AIC による前進ステップワイズ選択でも、両社とも交差項のみが選ばれた。</p>
+
+<figure style="width:88%;margin-left:auto;margin-right:auto"><img src="../output/fig_scatter.png" alt="散布図と期間別回帰直線">
+<div class="cap">図2　TOPIX 収益率と各社収益率（青=震災前、赤=震災後）と期間別の回帰直線。震災前はほぼ水平で、震災後は明確に右上がりになる。</div></figure>
+
+<h2>4. 頑健性の確認</h2>
+<p>震災後は誤差分散が大きく変わっており（東京電力で13.5倍、関西電力で5.0倍。完全モデルの残差の Breusch-Pagan 検定は両社とも p ≈ 0.03 で均一分散を棄却）、通常の標準誤差に基づく結論はそのままでは信頼しにくい。系列相関は問題ない（Durbin-Watson ≈ 2.00、Breusch-Godfrey p > 0.7）。そこで、次の確認を行った。</p>
+<table>
+<tr><th>交差項 δ の確認</th><th>東京電力 δ</th><th>p値</th><th>関西電力 δ</th><th>p値</th></tr>
+<tr><td>通常の標準誤差</td><td>1.691</td><td>&lt;0.001</td><td>0.819</td><td>&lt;0.001</td></tr>
+<tr><td>White（不均一分散に頑健）</td><td>1.691</td><td>0.003</td><td>0.819</td><td>&lt;0.001</td></tr>
+<tr><td>Newey-West（4次）</td><td>1.691</td><td>0.003</td><td>0.819</td><td>&lt;0.001</td></tr>
+<tr><td>2011年3月を除外（n = 204）</td><td>1.199</td><td>&lt;0.001</td><td>0.789</td><td>&lt;0.001</td></tr>
+<tr><td>2011年3〜12月を除外（n = 195）</td><td>1.170</td><td>&lt;0.001</td><td>0.809</td><td>&lt;0.001</td></tr>
+</table>
+<div class="cap">表2　交差項 δ の頑健性。いずれの条件でも1%水準で有意に正。</div>
+<p>暴落月を除くと東京電力の δ は縮む（1.69 → 1.20）ため、推定値の大きさの一部はこの1点に依存する。ただしベータの上昇そのものは残る。</p>
+<p>切片ダミー γ は頑健標準誤差では有意でなくなる（縮約モデルの東京電力で t = −2.03 → −1.40）。震災後に平均収益率が恒常的に下がったとは言えず、株価水準の低下は震災直後の一度きりの暴落として現れたと読める。</p>
+<p>断点を2011年3月から前後にずらすと、完全モデルの修正済み決定係数は、東京電力で1月0.180、2月0.180、3月0.179、4月0.108となる（関西電力は3月0.137、4月0.123）。2011年3月を震災後に含める設定が妥当だと確認できた。</p>
+
+<h2>5. 解釈</h2>
+<p>震災前の電力会社は、地域独占と総括原価方式のもとで収益がほぼ保証され、景気の影響を受けにくかった。株式でありながら債券に近い性質を持ち、市場とはほとんど連動しなかった（震災前の修正済み決定係数は東京電力で0.008、関西電力で負）。震災後は原発の停止と規制の見直しで収益の保証が揺らぎ、他の事業会社と同じく市場全体に感応するようになった。東京電力ではさらに、賠償や廃炉の負担で株式時価総額が負債に比べて小さくなり、財務レバレッジの上昇がベータを押し上げたと考えられる。東京電力の変化幅（+1.69）が関西電力（+0.82）の約2倍であることとも整合する。</p>
+<p>これらは推定結果から導いた解釈であり、規制・レバレッジの効果を直接測定したものではない。</p>
+
+<h2>6. 限界</h2>
+<p>相関の分析であり、震災が原因だと厳密に示したものではない（欧州債務危機、政権交代、その後の相場環境の変化と時期が重なる）。被災していない関西電力にも同時に変化が出ていることや、断点を4月にずらすと説明力が落ちることから、震災が主要因である可能性は高いが、識別はしていない。震災後も修正済み決定係数は東京電力0.19、関西電力0.16にとどまり、電力株の変動の大半は市場では説明できない個別要因による。対象は2社に限られ、他の電力会社や原発を持たない公益企業との比較は未実施である。また株価には配当が含まれず、無リスク金利も引いていない。</p>
+
+<div class="foot">コード・データ・再現方法：リポジトリの README を参照（R と Python の両実装。数値一致はテストで確認）。</div>
+</body></html>
